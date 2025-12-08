@@ -1,124 +1,97 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app import db
+from app import create_app, db
 from app.models import Usuario, Solicitacao
 
-# Print para confirmar que o servidor recarregou este arquivo
-print("--- ROTAS CARREGADAS COM SUCESSO ---")
+app = create_app()
 
-bp = Blueprint('main', __name__)
-
-# --- Context Processor: Simula o 'current_user' para o HTML ---
-@bp.context_processor
-def inject_user():
-    class MockUser:
-        is_authenticated = 'user_id' in session
-        name = session.get('user_nome')
-        id = session.get('user_id')
-        role = session.get('user_tipo')
-    return dict(current_user=MockUser())
-
-# --- DASHBOARD UVIS (Visão da Unidade) ---
-@bp.route('/')
-def dashboard():
-    # 1. Login obrigatório
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-    
-    # 2. Se for admin, manda para o painel de admin
-    if session.get('user_tipo') == 'admin':
-        return redirect(url_for('main.admin_dashboard'))
-
-    # 3. Busca apenas solicitações do próprio usuário logado
-    user_id = session.get('user_id')
-    lista_solicitacoes = Solicitacao.query.filter_by(usuario_id=user_id).order_by(Solicitacao.data_criacao.desc()).all()
-    
-    return render_template('dashboard.html', nome=session.get('user_nome'), solicitacoes=lista_solicitacoes)
-
-# --- PAINEL ADMIN (Visualizar Pedidos) ---
-@bp.route('/admin')
-def admin_dashboard():
-    # Verifica se é admin mesmo
-    if 'user_id' not in session or session.get('user_tipo') != 'admin':
-        return redirect(url_for('main.login'))
-
-    # Busca TODOS os pedidos do banco (para o admin ver tudo)
-    todos_pedidos = Solicitacao.query.order_by(Solicitacao.data_criacao.desc()).all()
-    
-    return render_template('admin.html', pedidos=todos_pedidos)
-
-# --- ROTA DE ATUALIZAÇÃO (Salvar dados do Admin) ---
-@bp.route('/admin/atualizar/<int:id>', methods=['POST'])
-def atualizar(id):
-    if session.get('user_tipo') != 'admin':
-        return redirect(url_for('main.login'))
-    
-    # Pega o pedido no banco
-    pedido = Solicitacao.query.get_or_404(id)
-    
-    # Atualiza com os dados vindos do formulário do Admin
-    pedido.coords = request.form.get('coords')
-    pedido.protocolo = request.form.get('protocolo')
-    pedido.status = request.form.get('status')
-    pedido.justificativa = request.form.get('justificativa')
-    
-    db.session.commit()
-    flash(f'Pedido atualizado com sucesso!', 'success')
-    
-    return redirect(url_for('main.admin_dashboard'))
-
-# --- NOVO PEDIDO (Cadastro da UVIS) ---
-@bp.route('/novo_cadastro', methods=['GET', 'POST'], endpoint='novo')
-def novo():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
-    if request.method == 'POST':
-        try:
-            nova_solicitacao = Solicitacao(
-                data_agendamento=request.form.get('data'),
-                hora_agendamento=request.form.get('hora'),
-                endereco=request.form.get('endereco'),
-                foco=request.form.get('foco'),
-                usuario_id=session['user_id'], # Vincula ao usuário logado
-                status='EM ANÁLISE'
-            )
-            db.session.add(nova_solicitacao)
-            db.session.commit()
-            flash('Pedido enviado para análise!', 'success')
-            return redirect(url_for('main.dashboard'))
-        except Exception as e:
-            flash(f"Erro ao salvar: {e}", "danger")
-
-    return render_template('cadastro.html')
-
-# --- LOGIN ---
-@bp.route('/login', methods=['GET', 'POST'])
-def login():
-    # Se já logado, redireciona
-    if 'user_id' in session:
-        if session.get('user_tipo') == 'admin':
-            return redirect(url_for('main.admin_dashboard'))
-        return redirect(url_for('main.dashboard'))
-
-    if request.method == 'POST':
-        user = Usuario.query.filter_by(login=request.form.get('login')).first()
-
-        if user and user.check_senha(request.form.get('senha')):
-            session['user_id'] = user.id
-            session['user_nome'] = user.nome_uvis
-            session['user_tipo'] = user.tipo_usuario
+def verificar_banco():
+    """
+    Roda ao iniciar. 
+    Cria e garante que todos os usuários de teste estão no banco.
+    """
+    print(">>> Iniciando verificação do banco de dados...")
+    try:
+        with app.app_context():
+            db.create_all()
             
-            # Redirecionamento Inteligente
-            if user.tipo_usuario == 'admin':
-                return redirect(url_for('main.admin_dashboard'))
-            return redirect(url_for('main.dashboard'))
-        else:
-            flash('Login incorreto.', 'danger')
+            # --- 1. GARANTE ADMIN ---
+            admin = Usuario.query.filter_by(login='admin').first()
+            if not admin:
+                print("--- Criando usuário Admin... ---")
+                admin = Usuario(
+                    nome_uvis="Administrador", 
+                    regiao="CENTRAL", 
+                    codigo_setor="00",
+                    login="admin",
+                    tipo_usuario="admin"
+                )
+                admin.set_senha("admin123")
+                db.session.add(admin)
+            else:
+                if admin.tipo_usuario != 'admin':
+                    admin.tipo_usuario = 'admin'
+                print(f"--- Usuário Admin encontrado (ID: {admin.id}) ---")
 
-    return render_template('login.html')
 
-# --- LOGOUT ---
-@bp.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('main.login'))
+            # --- 2. GARANTE LAPA ---
+            lapa = Usuario.query.filter_by(login='lapa').first()
+            if not lapa:
+                print("--- Criando usuário UVIS Lapa... ---")
+                lapa = Usuario(
+                    nome_uvis="UVIS Lapa/Pinheiros", 
+                    regiao="OESTE", 
+                    codigo_setor="90",
+                    login="lapa",
+                    tipo_usuario="uvis"
+                )
+                lapa.set_senha("1234")
+                db.session.add(lapa)
+            else:
+                print(f"--- Usuário Lapa encontrado (ID: {lapa.id}) ---")
+            
+            
+            # --- 3. GARANTE NOVO USUÁRIO DE TESTE (teste) ---
+            teste = Usuario.query.filter_by(login='teste').first()
+            if not teste:
+                print("--- Criando novo usuário de TESTE (teste)... ---")
+                teste = Usuario(
+                    nome_uvis="UVIS Teste QA", 
+                    regiao="SUL", 
+                    codigo_setor="10",
+                    login="teste",
+                    tipo_usuario="uvis"
+                )
+                teste.set_senha("1234")
+                db.session.add(teste)
+            else:
+                print(f"--- Usuário Teste encontrado (ID: {teste.id}) ---")
+
+
+            db.session.commit()
+            print(">>> Banco de dados verificado com sucesso!")
+            
+            
+            # --- CUIDADO: Cria pedido de teste para o TESTE (se necessário)
+            # Vamos garantir que pelo menos o 'teste' tem um pedido para testar a visualização
+            if teste and not Solicitacao.query.filter_by(usuario_id=teste.id).first():
+                print("--- Criando pedido de teste para o novo usuário 'teste'... ---")
+                pedido = Solicitacao(
+                    data_agendamento="2026-01-01",
+                    hora_agendamento="10:00",
+                    endereco="Rua Teste Funcional, 999",
+                    foco="Imóvel Abandonado",
+                    usuario_id=teste.id,
+                    status="EM ANÁLISE"
+                )
+                db.session.add(pedido)
+                db.session.commit()
+
+
+    except Exception as e:
+        print(f"!!! ERRO FATAL NA VERIFICAÇÃO DO BANCO: {e}")
+        # AQUI VAI DAR ERRO se você ainda tem um pedido de teste ligado ao Lapa
+        # Mas não tem problema, o servidor vai tentar iniciar.
+
+if __name__ == "__main__":
+    verificar_banco()
+    print(">>> INICIANDO SERVIDOR FLASK...")
+    app.run(debug=True)
