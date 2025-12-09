@@ -47,13 +47,19 @@ erDiagram
         datetime data_criacao
         date data_voo_prevista
         time hora_voo_prevista
-        string endereco_completo
+        string logradouro
+        string bairro
+        string cidade
+        string uf
+        string numero
+        string complemento
         string cep
         string foco_acao
         string status_voo
         string protocolo_decea
         string motivo_recusa
     }
+
 ```
 
 ## ⚙️ Fluxo de Uso
