@@ -1,3 +1,4 @@
+import os
 from app import create_app, db
 from app.models import Usuario, Solicitacao
 
@@ -94,4 +95,5 @@ def verificar_banco():
 if __name__ == "__main__":
     verificar_banco()
     print(">>> INICIANDO SERVIDOR FLASK...")
-    app.run(debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'True') == 'True'
+    app.run(debug=debug_mode)

@@ -12,8 +12,8 @@ def create_app():
     
     # Define o caminho do banco explicitamente na pasta 'instance'
     db_path = os.path.join(basedir, 'instance', 'sgsv.db')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave-super-secreta-lja-drones')
     
-    app.config['SECRET_KEY'] = 'chave-super-secreta-lja-drones'
     # Usa o caminho absoluto com 3 barras (sqlite:///)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

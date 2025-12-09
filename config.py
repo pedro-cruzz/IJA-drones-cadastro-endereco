@@ -6,5 +6,5 @@ class Config:
     
     # Caminho do Banco de Dados
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'sgsv.db')
+    SQLALCHEMY_DATABASE_URI = 'postgresql:///' + os.path.join(BASE_DIR, 'instance', 'sgsv.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
