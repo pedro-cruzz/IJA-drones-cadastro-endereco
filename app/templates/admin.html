@@ -13,42 +13,43 @@
     </a>
 </div>
 
-<form method="GET" class="row g-2 mb-3">
-    <div class="col-md-3">
-        <label class="small text-muted">Filtrar por Status</label>
-        <select name="status" class="form-select form-select-sm">
-            <option value="">Todos</option>
-            <option value="EM ANÁLISE" {{ 'selected' if request.args.get('status')=='EM ANÁLISE' else '' }}>🟡 Em
-                Análise</option>
-            <option value="APROVADO" {{ 'selected' if request.args.get('status')=='APROVADO' else '' }}>🟢 Aprovado
-            </option>
-            <option value="NEGADO" {{ 'selected' if request.args.get('status')=='NEGADO' else '' }}>🔴 Negado</option>
-        </select>
-    </div>
+<form method="GET" class="card p-3 mb-4 shadow-sm">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <label class="small text-muted">Filtrar por Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <option value="PENDENTE" {{ 'selected' if request.args.get('status')=='PENDENTE' else '' }}>⚪️ Pendente</option>
+                <option value="EM ANÁLISE" {{ 'selected' if request.args.get('status')=='EM ANÁLISE' else '' }}>🟡 Em Análise</option>
+                <option value="APROVADO" {{ 'selected' if request.args.get('status')=='APROVADO' else '' }}>🟢 Aprovado</option>
+                <option value="NEGADO" {{ 'selected' if request.args.get('status')=='NEGADO' else '' }}>🔴 Negado</option>
+            </select>
+        </div>
 
-    <div class="col-md-3">
-        <label class="small text-muted">Pesquisar por Unidade</label>
-        <input type="text" name="unidade" class="form-control form-control-sm" placeholder="Nome da UVIS..."
-            value="{{ request.args.get('unidade', '') }}">
-    </div>
+        <div class="col-md-3">
+            <label class="small text-muted">Pesquisar por Unidade</label>
+            <input type="text" name="unidade" class="form-control form-control-sm" placeholder="Nome da UVIS..."
+                value="{{ request.args.get('unidade', '') }}">
+        </div>
 
-    <div class="col-md-3">
-        <label class="small text-muted">Região</label>
-        <input type="text" name="regiao" class="form-control form-control-sm" placeholder="Leste, Oeste..."
-            value="{{ request.args.get('regiao', '') }}">
-    </div>
+        <div class="col-md-3">
+            <label class="small text-muted">Região</label>
+            <input type="text" name="regiao" class="form-control form-control-sm" placeholder="Leste, Oeste..."
+                value="{{ request.args.get('regiao', '') }}">
+        </div>
 
-    <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-dark btn-sm w-100">
-            <i class="bi bi-funnel"></i> Filtrar
-        </button>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-dark btn-sm w-100">
+                <i class="bi bi-funnel"></i> Filtrar
+            </button>
+        </div>
     </div>
 </form>
 
-<div class="card shadow-sm">
+<div class="card shadow-sm border-0">
     <div class="table-responsive">
-        <table class="table table-bordered align-middle mb-0">
-            <thead class="table-light">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
                 <tr>
                     <th style="width: 25%">Unidade</th>
                     <th style="width: 35%">Dados Técnicos</th>
@@ -61,33 +62,49 @@
                 <tr>
 
                     <td class="bg-light">
-                        <strong class="text-primary">{{ p.autor.nome_uvis }}</strong>
+                        <strong class="text-primary fs-6">{{ p.autor.nome_uvis }}</strong>
                         <br>
-                        <span class="badge bg-secondary mb-2">{{ p.autor.regiao }}</span>
+                        <span class="badge bg-secondary mb-2 mt-1">{{ p.autor.regiao }}</span>
 
-                        <div class="small text-muted border-top pt-2">
+                        <div class="small text-muted border-top pt-2 mt-2">
                             <i class="bi bi-calendar"></i>
-                            {{ p.data_agendamento | datetimeformat }} às {{ p.hora_agendamento }}
+                            {{ p.data_agendamento }} às {{ p.hora_agendamento }} <br>
 
-                            <br>
                             <i class="bi bi-geo-alt"></i>
-                            <span id="logradouro_{{ p.id }}">{{ p.logradouro }}</span>,
-                            <span id="numero_{{ p.id }}">{{ p.numero or 'S/N' }}</span> -
-                            <span id="bairro_{{ p.id }}">{{ p.bairro }}</span> <br>
+                            {% if p.logradouro %}
+                                {{ p.logradouro }}, {{ p.numero or 'S/N' }} - {{ p.bairro }}
+                            {% else %}
+                                {{ p.endereco or 'Endereço manual' }}
+                            {% endif %}
+                            <br>
+                            {{ p.cidade }} / {{ p.uf }} <br>
+                            CEP: {{ p.cep }}
 
-                            <span id="cidade_{{ p.id }}">{{ p.cidade }}</span> /
-                            <span id="uf_{{ p.id }}">{{ p.uf }}</span> <br>
+                            {% if p.coords %}
+                                <div class="mt-3 pt-2 border-top">
+                                    <a href="https://www.google.com/maps?q={{ p.coords }}" target="_blank" class="btn btn-sm btn-outline-danger w-100 fw-bold">
+                                        <i class="bi bi-geo-alt-fill"></i> Abrir no Maps
+                                    </a>
+                                    <div class="text-center mt-1">
+                                        <small class="text-muted font-monospace" style="font-size: 0.75rem;">{{ p.coords }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="mt-2 text-center text-muted fst-italic">
+                                    <small>Sem localização GPS</small>
+                                </div>
+                            {% endif %}
 
-                            CEP: <span id="cep_{{ p.id }}">{{ p.cep }}</span>
                         </div>
                     </td>
 
                     <form action="{{ url_for('main.atualizar', id=p.id) }}" method="POST">
 
                         <td>
-                            <label class="small fw-bold text-muted">Coordenadas</label>
-                            <input id="coords_{{ p.id }}" name="coords" class="form-control form-control-sm mb-2"
-                                placeholder="Lat, Long" value="{{ p.coords or '' }}">
+                            <label class="small fw-bold text-muted">Coordenadas (Ajuste)</label>
+                            <input name="coords" class="form-control form-control-sm mb-2" placeholder="Lat, Long"
+                                value="{{ p.coords or '' }}">
+
                             <label class="small fw-bold text-muted">Protocolo DECEA</label>
                             <input name="protocolo" class="form-control form-control-sm font-monospace"
                                 placeholder="BR-2025-XXXX" value="{{ p.protocolo or '' }}">
@@ -96,14 +113,12 @@
                         <td>
                             <div class="row g-2">
                                 <div class="col-12">
-                                    <label class="small fw-bold text-muted">Status</label>
+                                    <label class="small fw-bold text-muted">Status Atual</label>
                                     <select name="status" class="form-select form-select-sm">
-                                        <option value="EM ANÁLISE" {% if p.status=='EM ANÁLISE' %}selected{% endif %}>🟡
-                                            Analisar</option>
-                                        <option value="APROVADO" {% if p.status=='APROVADO' %}selected{% endif %}>🟢
-                                            Aprovar</option>
-                                        <option value="NEGADO" {% if p.status=='NEGADO' %}selected{% endif %}>🔴 Negar
-                                        </option>
+                                        <option value="PENDENTE" {% if p.status=='PENDENTE' %}selected{% endif %}>⚪️ Pendente (Novo)</option>
+                                        <option value="EM ANÁLISE" {% if p.status=='EM ANÁLISE' %}selected{% endif %}>🟡 Em Análise</option>
+                                        <option value="APROVADO" {% if p.status=='APROVADO' %}selected{% endif %}>🟢 Aprovar</option>
+                                        <option value="NEGADO" {% if p.status=='NEGADO' %}selected{% endif %}>🔴 Negar</option>
                                     </select>
                                 </div>
 
@@ -114,7 +129,7 @@
                                 </div>
 
                                 <div class="col-12 mt-3">
-                                    <button class="btn btn-primary btn-sm w-100 fw-bold">
+                                    <button class="btn btn-primary btn-sm w-100 fw-bold shadow-sm">
                                         <i class="bi bi-check-lg"></i> Salvar Alterações
                                     </button>
                                 </div>
@@ -123,17 +138,69 @@
                     </form>
 
                 </tr>
-
                 {% else %}
                 <tr>
-                    <td colspan="3" class="text-center py-4">Nenhum pedido encontrado.</td>
+                    <td colspan="3" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Nenhum pedido encontrado com esses filtros.
+                    </td>
                 </tr>
                 {% endfor %}
 
             </tbody>
         </table>
+        {% if paginacao.pages > 1 %}
+<nav aria-label="Navegação de páginas" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
+            <a class="page-link" 
+               href="{{ url_for('main.admin_dashboard', 
+                           page=paginacao.prev_num, 
+                           status=request.args.get('status'),
+                           unidade=request.args.get('unidade'),
+                           regiao=request.args.get('regiao')
+                       ) }}">
+                Anterior
+            </a>
+        </li>
+
+        {% for p in paginacao.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+                {% if p == paginacao.page %}
+                <li class="page-item active" aria-current="page"><a class="page-link">{{ p }}</a></li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" 
+                       href="{{ url_for('main.admin_dashboard', 
+                                   page=p, 
+                                   status=request.args.get('status'),
+                                   unidade=request.args.get('unidade'),
+                                   regiao=request.args.get('regiao')
+                               ) }}">
+                        {{ p }}
+                    </a>
+                </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><a class="page-link">...</a></li>
+            {% endif %}
+        {% endfor %}
+
+        <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
+            <a class="page-link" 
+               href="{{ url_for('main.admin_dashboard', 
+                           page=paginacao.next_num, 
+                           status=request.args.get('status'),
+                           unidade=request.args.get('unidade'),
+                           regiao=request.args.get('regiao')
+                       ) }}">
+                Próxima
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
     </div>
 </div>
-
 
 {% endblock %}

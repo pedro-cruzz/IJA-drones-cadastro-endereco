@@ -1,23 +1,52 @@
 {% extends "base.html" %}
-
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="text-secondary"><i class="bi bi-list-task"></i> Minhas Solicitações</h2>
+    <h2 class="text-secondary">
+        <i class="bi bi-list-task"></i> Minhas Solicitações
+    </h2>
     <a href="{{ url_for('main.novo') }}" class="btn btn-success shadow-sm">
         <i class="bi bi-plus-lg"></i> Nova Solicitação
     </a>
 </div>
 
-<div class="card shadow-sm">
+<form method="GET" class="card p-3 mb-4 shadow-sm border-0">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="small text-muted fw-bold mb-1">Filtrar por Situação</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Todos os Pedidos</option>
+                <option value="PENDENTE" {{ 'selected' if request.args.get('status')=='PENDENTE' else '' }}>⚪️ Pendentes</option>
+                <option value="EM ANÁLISE" {{ 'selected' if request.args.get('status')=='EM ANÁLISE' else '' }}>🟡 Em Análise</option>
+                <option value="APROVADO" {{ 'selected' if request.args.get('status')=='APROVADO' else '' }}>🟢 Aprovados</option>
+                <option value="NEGADO" {{ 'selected' if request.args.get('status')=='NEGADO' else '' }}>🔴 Negados</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-funnel me-2"></i> Filtrar
+            </button>
+        </div>
+
+        {% if request.args.get('status') %}
+        <div class="col-md-2">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm w-100">
+                <i class="bi bi-x-lg"></i> Limpar
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</form>
+
+<div class="card shadow-sm border-0">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>Data Planejada</th>
-                        <!-- Aumentei a largura para caber o endereço completo -->
-                        <th style="width: 45%;">Localização / Motivo</th>
+                        <th style="width: 45%">Localização / Motivo</th>
                         <th class="text-center">Situação</th>
                         <th>Protocolo DECEA</th>
                     </tr>
@@ -27,28 +56,25 @@
                     <tr>
                         <td>
                             <strong class="text-dark">
-                                {{ p.data_agendamento[8:10] }}-{{ p.data_agendamento[5:7] }}-{{ p.data_agendamento[2:4]
-                                }}
+                                {{ p.data_agendamento[8:10] }}-{{ p.data_agendamento[5:7] }}-{{ p.data_agendamento[2:4] }}
                             </strong>
-                            <br>
+                            <br />
                             <small class="text-muted">{{ p.hora_agendamento }}</small>
                         </td>
+
                         <td>
                             <div class="d-flex flex-column">
-                                <!-- LÓGICA DE ENDEREÇO CORRIGIDA -->
                                 {% if p.logradouro %}
-                                <!-- Caso Novo: Mostra Logradouro, Número, Bairro e Cidade -->
-                                <span class="fw-bold text-dark">
-                                    {{ p.logradouro }}, {{ p.numero or 'S/N' }}
-                                </span>
-                                <small class="text-muted">
-                                    {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}
-                                </small>
+                                    <span class="fw-bold text-dark">
+                                        {{ p.logradouro }}, {{ p.numero or 'S/N' }}
+                                    </span>
+                                    <small class="text-muted">
+                                        {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}
+                                    </small>
                                 {% else %}
-                                <!-- Caso Antigo ou Fallback: Tenta mostrar o campo antigo 'endereco' -->
-                                <span class="fw-bold text-dark">
-                                    {{ p.endereco or 'Endereço não informado' }}
-                                </span>
+                                    <span class="fw-bold text-dark">
+                                        {{ p.endereco or 'Endereço não informado' }}
+                                    </span>
                                 {% endif %}
 
                                 <div class="mt-1">
@@ -56,22 +82,31 @@
                                 </div>
                             </div>
                         </td>
+
                         <td class="text-center">
-                            {% if p.status == 'APROVADO' %}
-                            <span class="badge bg-success rounded-pill">Aprovado</span>
+                            {% if p.status == 'PENDENTE' %}
+                                <span class="badge bg-secondary text-white">
+                                    <i class="bi bi-hourglass me-1"></i> Pendente
+                                </span>
+
+                            {% elif p.status == 'APROVADO' %}
+                                <span class="badge bg-success rounded-pill">
+                                    <i class="bi bi-check-lg me-1"></i> Aprovado
+                                </span>
+
                             {% elif p.status == 'NEGADO' %}
-                            <span class="badge bg-danger rounded-pill" data-bs-toggle="tooltip" data-bs-placement="top"
-                                title="{{ p.justificativa }}">
-                                Negado
-                            </span>
-                            <div class="small text-danger mt-1 fw-bold" style="cursor: help; font-size: 0.75rem"
-                                data-bs-toggle="tooltip" title="{{ p.justificativa }}">
-                                Ver Motivo
-                            </div>
+                                <span class="badge bg-danger rounded-pill" data-bs-toggle="tooltip" title="{{ p.justificativa }}">
+                                    <i class="bi bi-x-circle me-1"></i> Negado
+                                </span>
+                                <div class="small text-danger mt-1 fw-bold" style="cursor: help; font-size: 0.75rem" data-bs-toggle="tooltip" title="{{ p.justificativa }}">
+                                    Ver Motivo
+                                </div>
+
                             {% else %}
-                            <span class="badge bg-warning text-dark rounded-pill">Em Análise</span>
+                                <span class="badge bg-warning text-dark rounded-pill">Em Análise</span>
                             {% endif %}
                         </td>
+
                         <td class="font-monospace text-primary fw-bold">
                             {{ p.protocolo or '-' }}
                         </td>
@@ -80,7 +115,12 @@
                     <tr>
                         <td colspan="4" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                            Você ainda não tem solicitações de voo.
+                            <p>Nenhuma solicitação encontrada com esse status.</p>
+                            {% if request.args.get('status') %}
+                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                            {% else %}
+                                <a href="{{ url_for('main.novo') }}" class="btn btn-sm btn-primary">Criar Agora</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -89,6 +129,49 @@
         </div>
     </div>
 </div>
+
+{% if paginacao and paginacao.pages > 1 %}
+<nav aria-label="Navegação de páginas" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
+            <a class="page-link" 
+               href="{{ url_for('main.dashboard', 
+                           page=paginacao.prev_num, 
+                           status=request.args.get('status', '')) }}">
+                Anterior
+            </a>
+        </li>
+
+        {% for p in paginacao.iter_pages() %}
+            {% if p %}
+                {% if p == paginacao.page %}
+                <li class="page-item active" aria-current="page"><a class="page-link">{{ p }}</a></li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" 
+                       href="{{ url_for('main.dashboard', 
+                                   page=p, 
+                                   status=request.args.get('status', '')) }}">
+                        {{ p }}
+                    </a>
+                </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><a class="page-link">...</a></li>
+            {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
+            <a class="page-link" 
+               href="{{ url_for('main.dashboard', 
+                           page=paginacao.next_num, 
+                           status=request.args.get('status', '')) }}">
+                Próxima
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
