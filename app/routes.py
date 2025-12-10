@@ -35,36 +35,23 @@ def dashboard():
     if session.get('user_tipo') == 'admin':
         return redirect(url_for('main.admin_dashboard'))
 
-    try:
-        user_id = int(session.get('user_id'))
-    except (ValueError, TypeError):
-        session.clear()
-        flash('Sessão Inválida. Por favor, faça login novamente.', 'warning')
-        return redirect(url_for('main.login'))
+    user_id = int(session.get('user_id'))
     
-    # 1. Query Base: Pega os pedidos SÓ deste usuário
+    # Filtros
     query = Solicitacao.query.filter_by(usuario_id=user_id)
-
-    # 2. Lógica do Filtro: Verifica se veio algo na URL (ex: ?status=PENDENTE)
     filtro_status = request.args.get('status')
-    
     if filtro_status:
         query = query.filter(Solicitacao.status == filtro_status)
 
-    # 3. Lógica da Paginação:
-    # Captura o número da página (padrão é 1)
-    page = request.args.get("page", 1, type=int) 
-    
-    # Ordena e executa a paginação (6 itens por página)
-    paginacao = query.order_by(
-        Solicitacao.data_criacao.desc()
-    ).paginate(page=page, per_page=6, error_out=False) # error_out=False evita erro se a página for inválida
+    # Paginação (igual ao Admin)
+    page = request.args.get('page', 1, type=int)
+    paginacao = query.order_by(Solicitacao.data_criacao.desc()).paginate(page=page, per_page=10)
     
     return render_template(
         'dashboard.html', 
         nome=session.get('user_nome'), 
-        solicitacoes=paginacao.items, # Envia apenas os itens da página atual
-        paginacao=paginacao # Envia o objeto de paginação completo para o template
+        solicitacoes=paginacao.items,  # Lista de pedidos da página atual
+        paginacao=paginacao            # Objeto para criar os botões Próximo/Anterior
     )
 
 # --- PAINEL ADMIN (com filtros) ---
@@ -114,137 +101,112 @@ def exportar_excel():
     from io import BytesIO
     from flask import send_file
 
-    # --- Captura filtros ---
+    # Filtros (Mantidos)
     filtro_status = request.args.get("status")
     filtro_unidade = request.args.get("unidade")
     filtro_regiao = request.args.get("regiao")
 
-    # Query base
     query = Solicitacao.query.join(Usuario)
 
     if filtro_status:
         query = query.filter(Solicitacao.status == filtro_status)
-
     if filtro_unidade:
         query = query.filter(Usuario.nome_uvis.ilike(f"%{filtro_unidade}%"))
-
     if filtro_regiao:
         query = query.filter(Usuario.regiao.ilike(f"%{filtro_regiao}%"))
 
     pedidos = query.order_by(Solicitacao.data_criacao.desc()).all()
 
-    # --- CRIA EXCEL ---
+    # --- EXCEL ---
     wb = Workbook()
     ws = wb.active
-    ws.title = "Relatório de Solicitações"
+    ws.title = "Relatório Completo"
 
-    # Cabeçalho
+    # CABEÇALHO ATUALIZADO
     headers = [
-        "ID",
-        "Unidade (UVIS)",
-        "Região",
-        "CEP",
-        "Endereço Completo",
-        "UF",
-        "Foco da Ação",
-        "Data Agendamento",
-        "Hora Agendamento",
-        "Status",
-        "Protocolo DECEA",
-        "Coordenadas",
-        "Justificativa"
+        "ID", "Unidade", "Região", 
+        "Data Agendada", "Hora", 
+        "CEP", "Endereço", "Bairro", "Cidade",
+        "Latitude", "Longitude",
+        "Foco", "Tipo Visita", "Altura", "Criadouro?", "Apoio CET?", 
+        "Observação",
+        "Status", "Protocolo", "Justificativa Recusa"
     ]
 
-    # Estilos
+    # Estilos (Mantidos)
     header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
     header_font = Font(color="FFFFFF", bold=True)
-    thin_border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
-    )
+    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-    # Escreve cabeçalho
     for col_num, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col_num, value=header)
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
-        cell.border = thin_border
 
-    # Conteúdo
+    # DADOS
     row_num = 2
     for p in pedidos:
+        # Formatação de Endereço
+        compl = f" ({p.complemento})" if p.complemento else ""
+        end_completo = f"{p.logradouro}, {p.numero or 'S/N'}{compl}"
 
-        # Monta o endereço completo
-        endereco_completo = f"{p.logradouro or ''}, {getattr(p, 'numero', '') or ''} - {p.bairro or ''}, {p.cidade or ''}".strip()
-        endereco_completo = endereco_completo.replace(" ,", "").replace(" - ,", "").replace(", ,", ",")
+        # Tratamento de Booleans (Sim/Não)
+        criadouro_txt = "SIM" if p.criadouro else "NÃO"
+        cet_txt = "SIM" if p.apoio_cet else "NÃO"
 
-
-    # Formata a data
-        if p.data_agendamento:
-            try:
-                data_formatada = datetime.strptime(p.data_agendamento, "%Y-%m-%d").strftime("%d-%m-%y")
-            except ValueError:
-                data_formatada = p.data_agendamento
-        else:
-            data_formatada = ""
-            
         row = [
-        p.id,
-        p.autor.nome_uvis,
-        p.autor.regiao,
-        p.cep,
-        endereco_completo,
-        p.uf,
-        p.foco,
-        data_formatada,  # << aqui usamos a data formatada
-        p.hora_agendamento,
-        p.status,
-        p.protocolo,
-        p.coords,
-        p.justificativa
-    ]
+            p.id,
+            p.autor.nome_uvis,
+            p.autor.regiao,
+            p.data_agendamento, # O Excel entende objeto Date do Python automaticamente
+            p.hora_agendamento,
+            p.cep,
+            end_completo,
+            p.bairro,
+            f"{p.cidade}/{p.uf}",
+            p.latitude,
+            p.longitude,
+            p.foco,
+            p.tipo_visita,
+            p.altura_voo,
+            criadouro_txt,
+            cet_txt,
+            p.observacao,
+            p.status,
+            p.protocolo,
+            p.justificativa
+        ]
 
         for col_num, value in enumerate(row, 1):
             cell = ws.cell(row=row_num, column=col_num, value=value)
             cell.border = thin_border
-            cell.alignment = Alignment(vertical="center", wrap_text=True)
-
+            cell.alignment = Alignment(vertical="center", wrap_text=False)
+        
         row_num += 1
 
-    # Freeze Pane
-    ws.freeze_panes = "A2"
-
-    # Ajuste automático de largura
+    # Ajuste de largura
     for col in ws.columns:
         max_length = 0
-        column = col[0].column  # Número da coluna
-
+        column = col[0].column_letter
         for cell in col:
             try:
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
             except:
                 pass
+        ws.column_dimensions[column].width = (max_length + 2)
 
-        adjusted_width = max_length + 2
-        ws.column_dimensions[get_column_letter(column)].width = adjusted_width
-
-    # Salvar em memória
     output = BytesIO()
     wb.save(output)
     output.seek(0)
 
-    # Enviar arquivo
     return send_file(
         output,
-        download_name="relatorio_solicitacoes.xlsx",
+        download_name="relatorio_completo.xlsx",
         as_attachment=True,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 
 # --- ROTA DE ATUALIZAÇÃO ---
 @bp.route('/admin/atualizar/<int:id>', methods=['POST'])
@@ -254,7 +216,11 @@ def atualizar(id):
     
     pedido = Solicitacao.query.get_or_404(id)
     
-    pedido.coords = request.form.get('coords')
+    # Atualiza Geo
+    pedido.latitude = request.form.get('latitude')
+    pedido.longitude = request.form.get('longitude')
+    
+    # Atualiza Status Admin
     pedido.protocolo = request.form.get('protocolo')
     pedido.status = request.form.get('status')
     pedido.justificativa = request.form.get('justificativa')
@@ -277,31 +243,38 @@ def novo():
         try:
             user_id_int = int(session['user_id'])
 
-            # 1. Captura os textos do HTML
-            data_str = request.form.get('data')  # Ex: "2023-12-25"
-            hora_str = request.form.get('hora')  # Ex: "14:30"
+            # Conversão de Data e Hora
+            data_obj = datetime.strptime(request.form.get('data'), '%Y-%m-%d').date()
+            hora_obj = datetime.strptime(request.form.get('hora'), '%H:%M').time()
 
-            # 2. Converte para objetos Python (Necessário para o novo Model)
-            data_obj = datetime.strptime(data_str, '%Y-%m-%d').date()
-            hora_obj = datetime.strptime(hora_str, '%H:%M').time()
+            # Conversão de Sim/Não para Booleano (True/False)
+            # Se o valor vindo do formulário for 'sim', vira True. Caso contrário, False.
+            criadouro_bool = request.form.get('criadouro') == 'sim'
+            apoio_cet_bool = request.form.get('apoio_cet') == 'sim'
 
             nova_solicitacao = Solicitacao(
-                data_agendamento=data_obj,  # Passa o objeto convertido
-                hora_agendamento=hora_obj,  # Passa o objeto convertido
+                data_agendamento=data_obj,
+                hora_agendamento=hora_obj,
+                foco=request.form.get('foco'),
+                
+                # Novos Campos
+                tipo_visita=request.form.get('tipo_visita'),
+                altura_voo=request.form.get('altura_voo'),
+                criadouro=criadouro_bool,
+                apoio_cet=apoio_cet_bool,
+                observacao=request.form.get('observacao'),
 
+                # Endereço e Geo
                 cep=request.form.get('cep'),
                 logradouro=request.form.get('logradouro'),
                 bairro=request.form.get('bairro'),
                 cidade=request.form.get('cidade'),
                 numero=request.form.get('numero'),
                 uf=request.form.get('uf'),
-                complemento=request.form.get('complemento'), # Já adicionei o complemento que estava no model
-                
-                # --- ESPAÇO RESERVADO PARA OS NOVOS CAMPOS ---
-                # ponto_referencia=request.form.get('ponto_referencia'),
-                # telefone=request.form.get('telefone'),
+                complemento=request.form.get('complemento'),
+                latitude=request.form.get('latitude'),
+                longitude=request.form.get('longitude'),
 
-                foco=request.form.get('foco'),
                 usuario_id=user_id_int,
                 status='PENDENTE'
             )
@@ -313,8 +286,7 @@ def novo():
             return redirect(url_for('main.dashboard'))
 
         except ValueError as ve:
-             # Pega erros de conversão de data/hora
-            flash(f"Erro no formato da data ou hora: {ve}", "warning")
+             flash(f"Erro no formato de data/hora: {ve}", "warning")
         except Exception as e:
             db.session.rollback()
             flash(f"Erro ao salvar: {e}", "danger")
@@ -336,12 +308,14 @@ def login():
             session['user_id'] = int(user.id)
             session['user_nome'] = user.nome_uvis
             session['user_tipo'] = user.tipo_usuario
+
+            flash(f'Bem-vindo, {user.nome_uvis}! Login realizado com sucesso.', 'success')
             
             if user.tipo_usuario == 'admin':
                 return redirect(url_for('main.admin_dashboard'))
             return redirect(url_for('main.dashboard'))
         else:
-            flash('Login incorreto.', 'danger')
+            flash('Login ou senha incorretos. Tente novamente.', 'danger')
 
     return render_template('login.html')
 
