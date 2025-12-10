@@ -54,6 +54,13 @@ erDiagram
         string numero
         string complemento
         string cep
+        string latitude
+        string longitude
+        string tipo_visita
+        string altura_voo
+        boolean criadouro
+        boolean apoio_cet
+        string observacao
         string foco_acao
         string status_voo
         string protocolo_decea
