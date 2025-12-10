@@ -45,10 +45,10 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Data Planejada</th>
-                        <th style="width: 45%">Localização / Motivo</th>
+                        <th>Data</th>
+                        <th style="width: 40%">Localização / Foco</th>
                         <th class="text-center">Situação</th>
-                        <th>Protocolo DECEA</th>
+                        <th class="text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,71 +56,56 @@
                     <tr>
                         <td>
                             <strong class="text-dark">
-                                {{ p.data_agendamento[8:10] }}-{{ p.data_agendamento[5:7] }}-{{ p.data_agendamento[2:4] }}
+                                {{ p.data_agendamento.strftime('%d/%m/%y') }}
                             </strong>
                             <br />
-                            <small class="text-muted">{{ p.hora_agendamento }}</small>
+                            <small class="text-muted">{{ p.hora_agendamento.strftime('%H:%M') }}</small>
                         </td>
 
                         <td>
                             <div class="d-flex flex-column">
-                                {% if p.logradouro %}
-                                    <span class="fw-bold text-dark">
-                                        {{ p.logradouro }}, {{ p.numero or 'S/N' }}
-                                    </span>
-                                    <small class="text-muted">
-                                        {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}
-                                    </small>
-                                {% else %}
-                                    <span class="fw-bold text-dark">
-                                        {{ p.endereco or 'Endereço não informado' }}
-                                    </span>
-                                {% endif %}
+                                <span class="fw-bold text-dark">
+                                    {{ p.logradouro }}, {{ p.numero or 'S/N' }}
+                                    {% if p.complemento %} <span class="fw-normal text-muted">({{ p.complemento }})</span> {% endif %}
+                                </span>
+                                <small class="text-muted">
+                                    {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}
+                                </small>
 
                                 <div class="mt-1">
                                     <span class="badge bg-light text-dark border">{{ p.foco }}</span>
+                                    {% if p.latitude %}
+                                        <i class="bi bi-geo-alt-fill text-danger ms-1" title="Localização GPS salva"></i>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>
 
                         <td class="text-center">
                             {% if p.status == 'PENDENTE' %}
-                                <span class="badge bg-secondary text-white">
-                                    <i class="bi bi-hourglass me-1"></i> Pendente
-                                </span>
-
+                                <span class="badge bg-secondary text-white"><i class="bi bi-hourglass me-1"></i> Pendente</span>
                             {% elif p.status == 'APROVADO' %}
-                                <span class="badge bg-success rounded-pill">
-                                    <i class="bi bi-check-lg me-1"></i> Aprovado
-                                </span>
-
+                                <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg me-1"></i> Aprovado</span>
+                                <div class="small text-success mt-1 fw-bold font-monospace">{{ p.protocolo }}</div>
                             {% elif p.status == 'NEGADO' %}
-                                <span class="badge bg-danger rounded-pill" data-bs-toggle="tooltip" title="{{ p.justificativa }}">
-                                    <i class="bi bi-x-circle me-1"></i> Negado
-                                </span>
-                                <div class="small text-danger mt-1 fw-bold" style="cursor: help; font-size: 0.75rem" data-bs-toggle="tooltip" title="{{ p.justificativa }}">
-                                    Ver Motivo
-                                </div>
-
+                                <span class="badge bg-danger rounded-pill"><i class="bi bi-x-circle me-1"></i> Negado</span>
                             {% else %}
                                 <span class="badge bg-warning text-dark rounded-pill">Em Análise</span>
                             {% endif %}
                         </td>
 
-                        <td class="font-monospace text-primary fw-bold">
-                            {{ p.protocolo or '-' }}
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalDetalhes{{ p.id }}">
+                                <i class="bi bi-eye"></i> Detalhes
+                            </button>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
                         <td colspan="4" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                            <p>Nenhuma solicitação encontrada com esse status.</p>
-                            {% if request.args.get('status') %}
-                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
-                            {% else %}
-                                <a href="{{ url_for('main.novo') }}" class="btn btn-sm btn-primary">Criar Agora</a>
-                            {% endif %}
+                            <p>Nenhuma solicitação encontrada.</p>
+                            <a href="{{ url_for('main.novo') }}" class="btn btn-sm btn-primary">Criar Agora</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -134,52 +119,104 @@
 <nav aria-label="Navegação de páginas" class="mt-4">
     <ul class="pagination justify-content-center">
         <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
-            <a class="page-link" 
-               href="{{ url_for('main.dashboard', 
-                           page=paginacao.prev_num, 
-                           status=request.args.get('status', '')) }}">
-                Anterior
-            </a>
+            <a class="page-link" href="{{ url_for('main.dashboard', page=paginacao.prev_num, status=request.args.get('status', '')) }}">Anterior</a>
         </li>
-
         {% for p in paginacao.iter_pages() %}
             {% if p %}
                 {% if p == paginacao.page %}
-                <li class="page-item active" aria-current="page"><a class="page-link">{{ p }}</a></li>
+                <li class="page-item active"><a class="page-link">{{ p }}</a></li>
                 {% else %}
-                <li class="page-item">
-                    <a class="page-link" 
-                       href="{{ url_for('main.dashboard', 
-                                   page=p, 
-                                   status=request.args.get('status', '')) }}">
-                        {{ p }}
-                    </a>
-                </li>
+                <li class="page-item"><a class="page-link" href="{{ url_for('main.dashboard', page=p, status=request.args.get('status', '')) }}">{{ p }}</a></li>
                 {% endif %}
             {% else %}
                 <li class="page-item disabled"><a class="page-link">...</a></li>
             {% endif %}
         {% endfor %}
-        
         <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
-            <a class="page-link" 
-               href="{{ url_for('main.dashboard', 
-                           page=paginacao.next_num, 
-                           status=request.args.get('status', '')) }}">
-                Próxima
-            </a>
+            <a class="page-link" href="{{ url_for('main.dashboard', page=paginacao.next_num, status=request.args.get('status', '')) }}">Próxima</a>
         </li>
     </ul>
 </nav>
 {% endif %}
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
+
+{% for p in solicitacoes %}
+<div class="modal fade" id="modalDetalhes{{ p.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Detalhes do Pedido #{{ p.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                
+                <h6 class="text-primary border-bottom pb-2 fw-bold"><i class="bi bi-geo-alt-fill"></i> Localização</h6>
+                <p class="mb-1 small">
+                    <strong>Endereço:</strong> {{ p.logradouro }}, {{ p.numero }} {{ '('+p.complemento+')' if p.complemento else '' }}
+                </p>
+                <p class="mb-2 small"><strong>Bairro:</strong> {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}</p>
+                
+                {% if p.latitude and p.longitude %}
+                <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded border mb-3">
+                    <div>
+                        <small class="text-muted d-block">Coordenadas:</small>
+                        <strong class="font-monospace small">{{ p.latitude }}, {{ p.longitude }}</strong>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query={{ p.latitude }},{{ p.longitude }}" target="_blank" class="btn btn-sm btn-danger">
+                        <i class="bi bi-map"></i> Ver Mapa
+                    </a>
+                </div>
+                {% endif %}
+
+                <h6 class="text-primary border-bottom pb-2 fw-bold mt-3"><i class="bi bi-sliders"></i> Operação</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Tipo de Visita:</small>
+                        <strong class="text-capitalize">{{ p.tipo_visita or '--' }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Altura:</small>
+                        <strong>{{ p.altura_voo or '--' }}</strong>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Criadouro?</small>
+                        {% if p.criadouro %}<span class="badge bg-danger">SIM</span>{% else %}<span class="badge bg-secondary">NÃO</span>{% endif %}
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Apoio CET?</small>
+                        {% if p.apoio_cet %}<span class="badge bg-warning text-dark">SIM</span>{% else %}<span class="badge bg-secondary">NÃO</span>{% endif %}
+                    </div>
+                </div>
+
+                {% if p.observacao %}
+                <div class="p-2 bg-light rounded border mb-3">
+                    <small class="text-muted d-block fw-bold">Observação do Usuário:</small>
+                    <em class="small">"{{ p.observacao }}"</em>
+                </div>
+                {% endif %}
+
+                {% if p.status == 'NEGADO' %}
+                <div class="alert alert-danger mb-0">
+                    <strong class="d-block"><i class="bi bi-x-circle"></i> Pedido Negado</strong>
+                    <small>{{ p.justificativa }}</small>
+                </div>
+                {% elif p.status == 'APROVADO' %}
+                <div class="alert alert-success mb-0">
+                    <strong class="d-block"><i class="bi bi-check-circle"></i> Pedido Aprovado</strong>
+                    <small>Protocolo: {{ p.protocolo }}</small>
+                </div>
+                {% endif %}
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 {% endblock %}
