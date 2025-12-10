@@ -26,6 +26,7 @@ def inject_user():
     return dict(current_user=MockUser())
 
 # --- DASHBOARD UVIS ---
+
 @bp.route('/')
 def dashboard():
     if 'user_id' not in session:
@@ -41,15 +42,30 @@ def dashboard():
         flash('Sessão Inválida. Por favor, faça login novamente.', 'warning')
         return redirect(url_for('main.login'))
     
-    query = Solicitacao.query.filter_by(usuario_id=user_id).order_by(Solicitacao.data_criacao.desc())
+    # 1. Query Base: Pega os pedidos SÓ deste usuário
+    query = Solicitacao.query.filter_by(usuario_id=user_id)
+
+    # 2. Lógica do Filtro: Verifica se veio algo na URL (ex: ?status=PENDENTE)
+    filtro_status = request.args.get('status')
     
-    print("\n===============================")
-    print(f"DEBUG: USUÁRIO LOGADO ID (SESSÃO): {user_id}")
-    print(f"DEBUG: FILTRO SQL A SER EXECUTADO: {query.statement.compile(compile_kwargs={'literal_binds': True})}")
-    print("===============================\n")
+    if filtro_status:
+        query = query.filter(Solicitacao.status == filtro_status)
+
+    # 3. Lógica da Paginação:
+    # Captura o número da página (padrão é 1)
+    page = request.args.get("page", 1, type=int) 
     
-    lista_solicitacoes = query.all()
-    return render_template('dashboard.html', nome=session.get('user_nome'), solicitacoes=lista_solicitacoes)
+    # Ordena e executa a paginação (6 itens por página)
+    paginacao = query.order_by(
+        Solicitacao.data_criacao.desc()
+    ).paginate(page=page, per_page=6, error_out=False) # error_out=False evita erro se a página for inválida
+    
+    return render_template(
+        'dashboard.html', 
+        nome=session.get('user_nome'), 
+        solicitacoes=paginacao.items, # Envia apenas os itens da página atual
+        paginacao=paginacao # Envia o objeto de paginação completo para o template
+    )
 
 # --- PAINEL ADMIN (com filtros) ---
 @bp.route('/admin')
@@ -75,9 +91,17 @@ def admin_dashboard():
     if filtro_regiao:
         query = query.filter(Usuario.regiao.ilike(f"%{filtro_regiao}%"))
 
-    pedidos_filtrados = query.order_by(Solicitacao.data_criacao.desc()).all()
+    page = request.args.get("page", 1, type=int)
 
-    return render_template('admin.html', pedidos=pedidos_filtrados)
+    paginacao = query.order_by(
+    Solicitacao.data_criacao.desc()
+    ).paginate(page=page, per_page=9)
+
+    return render_template(
+    'admin.html',
+    pedidos=paginacao.items,
+    paginacao=paginacao
+)
 
 @bp.route('/admin/exportar_excel')
 def exportar_excel():
@@ -247,16 +271,23 @@ def novo():
         return redirect(url_for('main.login'))
 
     from datetime import date
-    #Trava data aqui pra não inserir uma anterior que hoje
     hoje = date.today().isoformat() 
 
     if request.method == 'POST':
         try:
             user_id_int = int(session['user_id'])
 
+            # 1. Captura os textos do HTML
+            data_str = request.form.get('data')  # Ex: "2023-12-25"
+            hora_str = request.form.get('hora')  # Ex: "14:30"
+
+            # 2. Converte para objetos Python (Necessário para o novo Model)
+            data_obj = datetime.strptime(data_str, '%Y-%m-%d').date()
+            hora_obj = datetime.strptime(hora_str, '%H:%M').time()
+
             nova_solicitacao = Solicitacao(
-                data_agendamento=request.form.get('data'),
-                hora_agendamento=request.form.get('hora'),
+                data_agendamento=data_obj,  # Passa o objeto convertido
+                hora_agendamento=hora_obj,  # Passa o objeto convertido
 
                 cep=request.form.get('cep'),
                 logradouro=request.form.get('logradouro'),
@@ -264,18 +295,26 @@ def novo():
                 cidade=request.form.get('cidade'),
                 numero=request.form.get('numero'),
                 uf=request.form.get('uf'),
+                complemento=request.form.get('complemento'), # Já adicionei o complemento que estava no model
+                
+                # --- ESPAÇO RESERVADO PARA OS NOVOS CAMPOS ---
+                # ponto_referencia=request.form.get('ponto_referencia'),
+                # telefone=request.form.get('telefone'),
 
                 foco=request.form.get('foco'),
                 usuario_id=user_id_int,
-                status='EM ANÁLISE'
+                status='PENDENTE'
             )
 
             db.session.add(nova_solicitacao)
             db.session.commit()
 
-            flash('Pedido enviado para análise!', 'success')
+            flash('Pedido enviado com sucesso!', 'success')
             return redirect(url_for('main.dashboard'))
 
+        except ValueError as ve:
+             # Pega erros de conversão de data/hora
+            flash(f"Erro no formato da data ou hora: {ve}", "warning")
         except Exception as e:
             db.session.rollback()
             flash(f"Erro ao salvar: {e}", "danger")
@@ -306,8 +345,94 @@ def login():
 
     return render_template('login.html')
 
+# --- Relatorios ---
+@bp.route('/relatorios')
+def relatorios():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    # Se não for admin, redireciona
+    if session.get('user_tipo') != 'admin':
+        flash('Acesso restrito aos administradores.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # ---------- 1. Coleta e Filtro de Parâmetros da URL ----------
+    
+    # Obtém mês e ano da URL (ex: /relatorios?mes=12&ano=2024)
+    # Se não houver, usa o mês e ano atuais
+    mes_atual = int(request.args.get('mes', datetime.now().month))
+    ano_atual = int(request.args.get('ano', datetime.now().year))
+    
+    # Cria uma base de consulta (query)
+    query_base = Solicitacao.query
+    
+    # Cria os filtros de data (compatível com SQLite)
+    filtro_data = f'{ano_atual}-{mes_atual:02d}' 
+    
+    # Aplica o filtro à consulta base para os totais
+    query_filtrada = query_base.filter(
+        db.func.strftime('%Y-%m', Solicitacao.data_criacao) == filtro_data
+    )
+    
+    # ---------- 2. Coleta de dados com Filtro e Conversão ----------
+    
+    total_solicitacoes = query_filtrada.count()
+    total_aprovadas = query_filtrada.filter_by(status='APROVADO').count()
+    total_recusadas = query_filtrada.filter_by(status='NEGADO').count()
+    total_analise = query_filtrada.filter_by(status='EM ANÁLISE').count()
+
+    # Por região (join explícito para evitar ambiguidade) - FILTRADO!
+    dados_regiao_raw = (
+        db.session.query(Usuario.regiao, db.func.count(Solicitacao.id))
+        .join(Usuario, Usuario.id == Solicitacao.usuario_id)
+        .filter(db.func.strftime('%Y-%m', Solicitacao.data_criacao) == filtro_data)
+        .group_by(Usuario.regiao)
+        .all()
+    )
+    # 💡 CORREÇÃO: Converte objetos Row em tuplas para serialização JSON
+    dados_regiao = [tuple(row) for row in dados_regiao_raw]
+
+
+    # Solicitações por mês (gráfico) — SEM FILTRO de mês/ano, retorna todos os meses para o gráfico
+    dados_mensais_raw = (
+        db.session.query(
+            db.func.strftime('%Y-%m', Solicitacao.data_criacao).label('mes'),
+            db.func.count(Solicitacao.id)
+        )
+        .group_by('mes')
+        .order_by('mes')
+        .all()
+    )
+    # 💡 CORREÇÃO: Converte objetos Row em tuplas para serialização JSON
+    dados_mensais = [tuple(row) for row in dados_mensais_raw]
+
+    
+    # Cria lista de anos disponíveis (usa dados_mensais_raw para extrair os anos únicos)
+    anos_disponiveis = sorted(list(set([d[0].split('-')[0] for d in dados_mensais])), reverse=True)
+    
+    # ---------- 3. Renderização ----------
+    return render_template(
+        'relatorios.html',
+        total_solicitacoes=total_solicitacoes,
+        total_aprovadas=total_aprovadas,
+        total_recusadas=total_recusadas,
+        total_analise=total_analise,
+        dados_regiao=dados_regiao,
+        dados_mensais=dados_mensais,
+        
+        # Envia os filtros ativos para o HTML
+        mes_selecionado=mes_atual,
+        ano_selecionado=ano_atual,
+        anos_disponiveis=anos_disponiveis
+    )
+
 # --- LOGOUT ---
 @bp.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('main.login'))
+
+@bp.route("/forcar_erro")
+def forcar_erro():
+    1 / 0  # erro proposital
+    return "nunca vai chegar aqui"
