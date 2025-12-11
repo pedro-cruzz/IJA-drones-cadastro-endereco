@@ -1,6 +1,6 @@
-import os
 from app import create_app, db
 from app.models import Usuario, Solicitacao
+from datetime import datetime # Importação adicionada para usar em Solicitacao (se necessário)
 
 app = create_app()
 
@@ -14,12 +14,12 @@ def verificar_banco():
         with app.app_context():
             db.create_all()
             
-            # --- 1. GARANTE ADMIN ---
+            # --- 1. GARANTE ADMIN ORIGINAL ---
             admin = Usuario.query.filter_by(login='admin').first()
             if not admin:
-                print("--- Criando usuário Admin... ---")
+                print("--- Criando usuário Admin (original)... ---")
                 admin = Usuario(
-                    nome_uvis="Administrador", 
+                    nome_uvis="Administrador Original", 
                     regiao="CENTRAL", 
                     codigo_setor="00",
                     login="admin",
@@ -30,7 +30,46 @@ def verificar_banco():
             else:
                 if admin.tipo_usuario != 'admin':
                     admin.tipo_usuario = 'admin'
-                print(f"--- Usuário Admin encontrado (ID: {admin.id}) ---")
+                print(f"--- Usuário Admin (original) encontrado (ID: {admin.id}) ---")
+
+
+            # --- 1.5. GARANTE OPERARIO ---
+            # Este usuário tem permissão total de alteração, mas não de relatório.
+            operario = Usuario.query.filter_by(login='operario').first()
+            if not operario:
+                print("--- Criando novo usuário Operario... ---")
+                operario = Usuario(
+                    nome_uvis="Usuário Operário", 
+                    regiao="OPERACIONAL", 
+                    codigo_setor="98",
+                    login="operario",
+                    tipo_usuario="operario"
+                )
+                operario.set_senha("operario123")
+                db.session.add(operario)
+            else:
+                if operario.tipo_usuario != 'operario':
+                    operario.tipo_usuario = 'operario' 
+                print(f"--- Usuário Operario encontrado (ID: {operario.id}) ---")
+
+
+            # --- 1.7. GARANTE VISUALIZAR (NOVO) ---
+            visualizar = Usuario.query.filter_by(login='visualizar').first()
+            if not visualizar:
+                print("--- Criando novo usuário Visualizar (somente leitura)... ---")
+                visualizar = Usuario(
+                    nome_uvis="Usuário Somente Leitura", 
+                    regiao="AUDITORIA", 
+                    codigo_setor="99",
+                    login="visualizar",
+                    tipo_usuario="visualizar" # NOVO TIPO DE USUÁRIO
+                )
+                visualizar.set_senha("1234") # Senha solicitada
+                db.session.add(visualizar)
+            else:
+                if visualizar.tipo_usuario != 'visualizar':
+                    visualizar.tipo_usuario = 'visualizar' 
+                print(f"--- Usuário Visualizar encontrado (ID: {visualizar.id}) ---")
 
 
             # --- 2. GARANTE LAPA ---
@@ -69,15 +108,27 @@ def verificar_banco():
 
             db.session.commit()
             print(">>> Banco de dados verificado com sucesso!")
+            
+            
+            # --- CUIDADO: Cria pedido de teste para o TESTE (se necessário)
+            if teste and not Solicitacao.query.filter_by(usuario_id=teste.id).first():
+                print("--- Criando pedido de teste para o novo usuário 'teste'... ---")
+                pedido = Solicitacao(
+                    data_agendamento="2026-01-01",
+                    hora_agendamento="10:00",
+                    endereco="Rua Teste Funcional, 999",
+                    foco="Imóvel Abandonado",
+                    usuario_id=teste.id,
+                    status="EM ANÁLISE"
+                )
+                db.session.add(pedido)
+                db.session.commit()
 
 
     except Exception as e:
         print(f"!!! ERRO FATAL NA VERIFICAÇÃO DO BANCO: {e}")
-        # AQUI VAI DAR ERRO se você ainda tem um pedido de teste ligado ao Lapa
-        # Mas não tem problema, o servidor vai tentar iniciar.
 
 if __name__ == "__main__":
     verificar_banco()
     print(">>> INICIANDO SERVIDOR FLASK...")
-    debug_mode = os.environ.get('FLASK_DEBUG', 'True') == 'True'
-    app.run(debug=debug_mode)
+    app.run(debug=True)
