@@ -4,8 +4,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="text-dark"><i class="bi bi-shield-lock-fill"></i> Painel de Gestão</h2>
 
+    {# 1. CONTROLE DE PERMISSÃO: BOTÕES EXPORTAR #}
     <div class="d-flex gap-2">
         {% if is_editable %}
+        {# MANTIDO: BOTÃO EXPORTAR EXCEL (Permitido para ADMIN e OPERARIO) #}
         <a class="btn btn-success btn-sm" href="{{ url_for('main.exportar_excel',
             status=request.args.get('status'),
             unidade=request.args.get('unidade'),
@@ -13,12 +15,13 @@
         ) }}">
             <i class="bi bi-file-earmark-excel"></i> Exportar Excel
         </a>
-        {% else %}
-        <span class="text-muted small fst-italic">Acesso de Visualização</span>
         {% endif %}
+
+        {# REMOVIDO: O bloco de exportar PDF que causava o erro 'now() is undefined' #}
     </div>
 </div>
 
+{# --- Formulário de Filtros --- #}
 <form method="GET" class="card p-3 mb-4 shadow-sm">
     <div class="row g-2">
         <div class="col-md-3">
@@ -45,6 +48,7 @@
     </div>
 </form>
 
+{# --- Tabela de Pedidos --- #}
 <div class="card shadow-sm border-0">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -52,49 +56,60 @@
                 <tr>
                     <th style="width: 25%">Unidade</th>
                     <th style="width: 40%">Dados da Operação</th>
+                    {# AJUSTE DO HEADER PARA REFLETIR O TIPO DE USUÁRIO #}
                     <th style="width: 35%">{% if is_editable %}Decisão & Ajustes{% else %}Status Atual & Protocolo{% endif %}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for p in pedidos %}
+                {# **LINHA CORRIGIDA: REMOVIDA A TAG <form> EXTERNA** #}
                 <tr>
                     <td class="bg-light align-top pt-3">
                         <strong class="text-primary fs-6">{{ p.autor.nome_uvis }}</strong>
                         <br>
                         <span class="badge bg-secondary mb-2 mt-1">{{ p.autor.regiao }}</span>
 
-                        {% if current_user.tipo_usuario == 'admin' %}
-                        <div class="d-flex gap-1 mt-2">
-                            <a href="{{ url_for('main.admin_editar', id=p.id) }}" class="btn btn-sm btn-info text-white me-2" title="Editar Data, Endereço e Foco (Apenas Admin)">
-                                <i class="bi bi-pencil-square"></i> editar
-                            </a>
-                            <form action="{{ url_for('main.deletar_registro', id=p.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja DELETAR PERMANENTEMENTE este registro? Esta ação é irreversível.');">
-                                <button type="submit" class="btn btn-sm btn-danger" title="Deletar permanentemente (Apenas Admin)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                        {% endif %}
-
+                        
                         <div class="small text-muted border-top pt-2 mt-2">
                             <i class="bi bi-calendar"></i> 
                             {{ p.data_agendamento.strftime('%d/%m/%Y') }} às {{ p.hora_agendamento.strftime('%H:%M') }} 
                             <br><br>
+
                             <i class="bi bi-geo-alt"></i>
                             {{ p.logradouro }}, {{ p.numero or 'S/N' }}
                             {% if p.complemento %} <br><span class="fst-italic">({{ p.complemento }})</span> {% endif %}
-                            <br>{{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}
-                            <br>CEP: {{ p.cep }}
+                            <br>
+                            {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}
+                            <br>
+                            CEP: {{ p.cep }}
                         </div>
+                        {# NOVO: BOTÕES DE ADMIN/DELETAR #}
+                        {% if current_user.tipo_usuario == 'admin' %}
+                        <div class="d-flex gap-1 mt-2">
+                            <a href="{{ url_for('main.admin_editar', id=p.id) }}" class="btn btn-sm btn-info text-white me-2">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </a>
+                            {# ESTE FORMULÁRIO ESTÁ CORRETO E AGORA NÃO ESTÁ ANINHADO #}
+                            <form action="{{ url_for('main.deletar_registro', id=p.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja DELETAR PERMANENTEMENTE este registro? Esta ação é irreversível.');">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash">Deletar</i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        {# FIM NOVO BOTÕES DE ADMIN/DELETAR #}
+
                     </td>
 
                     <td class="align-top pt-3">
+                        {# Dados da Operação - GPS #}
                         {% if p.latitude and p.longitude %}
                         <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded mb-3 border">
                             <div style="line-height: 1.2;">
                                 <small class="text-muted d-block">GPS:</small>
                                 <small class="fw-bold font-monospace">{{ p.latitude }}, {{ p.longitude }}</small>
                             </div>
+                            {# Atenção: Mapeamento corrigido. Use http://maps.google.com/maps?q=... #}
                             <a href="http://maps.google.com/maps?q={{ p.latitude }},{{ p.longitude }}" target="_blank" class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-map-fill"></i> Mapa
                             </a>
@@ -105,6 +120,7 @@
                         </div>
                         {% endif %}
 
+                        {# Dados da Operação - Detalhes #}
                         <div class="row g-2 small mb-2">
                             <div class="col-6">
                                 <span class="text-muted d-block">Tipo de Visita:</span>
@@ -121,8 +137,17 @@
                         </div>
 
                         <div class="mb-3">
-                            <span class="badge {% if p.criadouro %}bg-danger{% else %}bg-light text-secondary border{% endif %}">Criadouro: {{ 'SIM' if p.criadouro else 'NÃO' }}</span>
-                            <span class="badge {% if p.apoio_cet %}bg-warning text-dark{% else %}bg-light text-secondary border{% endif %}">Apoio CET: {{ 'SIM' if p.apoio_cet else 'NÃO' }}</span>
+                            {% if p.criadouro %}
+                            <span class="badge bg-danger">Criadouro: SIM</span>
+                            {% else %}
+                            <span class="badge bg-light text-secondary border">Criadouro: NÃO</span>
+                            {% endif %}
+
+                            {% if p.apoio_cet %}
+                            <span class="badge bg-warning text-dark">Apoio CET: SIM</span>
+                            {% else %}
+                            <span class="badge bg-light text-secondary border">Apoio CET: NÃO</span>
+                            {% endif %}
                         </div>
 
                         {% if p.observacao %}
@@ -133,6 +158,8 @@
                     </td>
 
                     <td class="align-top pt-3 bg-light bg-opacity-50">
+                        
+                        {# **LINHA CORRIGIDA: O FORMULÁRIO DE ATUALIZAÇÃO COMEÇA AQUI** #}
                         {% if is_editable %}
                         <form action="{{ url_for('main.atualizar', id=p.id) }}" method="POST">
                             <div class="row g-1 mb-2">
@@ -165,7 +192,11 @@
                                 </button>
                             </div>
                         </form>
+                        {# **LINHA CORRIGIDA: O FORMULÁRIO DE ATUALIZAÇÃO TERMINA AQUI** #}
+                        
+                        {# CONTEÚDO SOMENTE LEITURA PARA 'VISUALIZAR' #}
                         {% else %}
+                        
                         <div class="p-3 border rounded bg-white">
                             <label class="small fw-bold text-muted">Status Atual:</label>
                             <div class="text-center mb-3">
@@ -177,14 +208,20 @@
                             </div>
 
                             <label class="small fw-bold text-muted">Protocolo DECEA:</label>
-                            <div class="mb-2 p-1 border rounded font-monospace small">{{ p.protocolo or 'N/A' }}</div>
+                            <div class="mb-2 p-1 border rounded font-monospace small">
+                                {{ p.protocolo or 'N/A' }}
+                            </div>
 
                             <label class="small fw-bold text-muted">Justificativa (se houver):</label>
-                            <div class="small p-1 border rounded fst-italic text-muted">{{ p.justificativa or 'Nenhuma' }}</div>
+                            <div class="small p-1 border rounded fst-italic text-muted">
+                                {{ p.justificativa or 'Nenhuma' }}
+                            </div>
                         </div>
+                        
                         {% endif %}
                     </td>
                 </tr>
+                {# **LINHA CORRIGIDA: REMOVIDA A TAG </form> EXTERNA FINAL** #}
                 {% else %}
                 <tr>
                     <td colspan="3" class="text-center py-5 text-muted">
@@ -195,7 +232,8 @@
                 {% endfor %}
             </tbody>
         </table>
-
+        
+        {# --- Paginação --- #}
         {% if paginacao.pages > 1 %}
         <nav aria-label="Navegação" class="mt-4 pb-3">
             <ul class="pagination justify-content-center">

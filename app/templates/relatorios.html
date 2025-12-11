@@ -32,15 +32,14 @@
     </div>
 </div>
 
-<form method="GET" class="card p-3 mb-4 shadow-sm rounded-4 bg-light">
+{# --- Bloco de Filtros Unificado --- #}
+<form method="GET" class="card shadow-sm rounded-4 p-3 mb-4 bg-light">
     <div class="row g-2 align-items-end">
         <div class="col-md-3">
             <label for="mes_select" class="small text-muted fw-bold mb-1">Mês:</label>
             <select name="mes" id="mes_select" class="form-select form-select-sm">
                 {% for num, nome in meses.items() %}
-                    <option value="{{ num }}" {% if num == mes_selecionado|int %}selected{% endif %}>
-                        {{ nome }}
-                    </option>
+                    <option value="{{ num }}" {% if num == mes_selecionado|int %}selected{% endif %}>{{ nome }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -49,9 +48,7 @@
             <label for="ano_select" class="small text-muted fw-bold mb-1">Ano:</label>
             <select name="ano" id="ano_select" class="form-select form-select-sm">
                 {% for ano in anos_disponiveis %}
-                    <option value="{{ ano }}" {% if ano|int == ano_selecionado|int %}selected{% endif %}>
-                        {{ ano }}
-                    </option>
+                    <option value="{{ ano }}" {% if ano|int == ano_selecionado|int %}selected{% endif %}>{{ ano }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -59,13 +56,9 @@
         <div class="col-md-3">
             <label for="uvis_select" class="small text-muted fw-bold mb-1">Unidade (UVIS):</label>
             <select name="uvis_id" id="uvis_select" class="form-select form-select-sm">
-                <option value="" {% if uvis_id_selecionado is none or uvis_id_selecionado == "" %}selected{% endif %}>
-                    Todas as Unidades
-                </option>
+                <option value="" {% if uvis_id_selecionado is none or uvis_id_selecionado == "" %}selected{% endif %}>Todas as Unidades</option>
                 {% for id, nome in uvis_disponiveis %}
-                    <option value="{{ id }}" {% if id|int == uvis_id_selecionado|int %}selected{% endif %}>
-                        {{ nome }}
-                    </option>
+                    <option value="{{ id }}" {% if id|int == uvis_id_selecionado|int %}selected{% endif %}>{{ nome }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -127,8 +120,174 @@
     </div>
 </div>
 
-{# --- Tabelas: Região, Unidade, Status, Foco, Tipo, Altura --- #}
-{# ... Mesma estrutura do primeiro código ... #}
+{# --- Tabelas detalhadas: Região, Unidade, Status, Foco, Tipo, Altura --- #}
+<div class="card shadow-sm rounded-4 p-4 mb-4">
+    <h4 class="mb-3 text-dark"><i class="bi bi-geo-alt-fill me-2"></i>Solicitações por Região</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Região</th>
+                    <th class="text-center">Total de Solicitações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for regiao, count in dados_regiao %}
+                <tr>
+                    <td>{{ regiao or 'Não informado' }}</td>
+                    <td class="text-center">{{ count }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" class="text-center text-muted">Nenhuma solicitação encontrada para este período.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm rounded-4 p-4 mb-4">
+    <h4 class="mb-3 text-dark"><i class="bi bi-building-check me-2"></i>Solicitações por Unidade (UVIS)</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Unidade (UVIS)</th>
+                    <th class="text-center">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for unidade, total in dados_unidade %}
+                <tr>
+                    <td>{{ unidade or 'Não informado' }}</td>
+                    <td class="text-center">{{ total }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" class="text-center text-muted">Nenhuma solicitação encontrada para as unidades do período selecionado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm rounded-4 p-4 h-100">
+            <h4 class="mb-3 text-dark"><i class="bi bi-list-task me-2"></i>Status Detalhado</h4>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for status, count in dados_status %}
+                        <tr>
+                            <td><span class="badge bg-{{ status_cores.get(status, 'secondary') }} text-uppercase">{{ status }}</span></td>
+                            <td class="text-center">{{ count }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">Nenhum status encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm rounded-4 p-4 h-100">
+            <h4 class="mb-3 text-dark"><i class="bi bi-bullseye me-2"></i>Solicitações por Foco</h4>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Foco</th>
+                            <th class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for foco, count in dados_foco %}
+                        <tr>
+                            <td>{{ foco or 'Não informado' }}</td>
+                            <td class="text-center">{{ count }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">Nenhuma solicitação encontrada por foco.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm rounded-4 p-4 h-100">
+            <h4 class="mb-3 text-dark"><i class="bi bi-journal-text me-2"></i>Solicitações por Tipo de Visita</h4>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tipo de Visita</th>
+                            <th class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tipo, count in dados_tipo_visita %}
+                        <tr>
+                            <td>{{ tipo | capitalize or 'Não informado' }}</td>
+                            <td class="text-center">{{ count }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">Nenhuma solicitação encontrada por tipo de visita.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm rounded-4 p-4 h-100">
+            <h4 class="mb-3 text-dark"><i class="bi bi-ruler me-2"></i>Solicitações por Altura de Voo</h4>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Altura (Metros)</th>
+                            <th class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for altura, count in dados_altura_voo %}
+                        <tr>
+                            <td>{{ altura or 'Não informado' }}</td>
+                            <td class="text-center">{{ count }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">Nenhuma solicitação encontrada por altura de voo.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="card shadow-sm rounded-4 p-4 mb-4">
     <h4 class="mb-3 text-dark"><i class="bi bi-graph-up me-2"></i>Solicitações por Mês (Histórico)</h4>
