@@ -90,7 +90,7 @@ graph TD
 ```
 ## 🚀 Tecnologias Utilizadas
 
-- **Linguagem:** Python 3.14+
+- **Linguagem:** Python 3.12+
 - **Framework Web:** Flask (Microframework ágil)
 - **Banco de Dados:** SQL (SQLite para Dev / PostgreSQL para Produção)
 - **ORM:** SQLAlchemy
@@ -178,5 +178,3 @@ sgsv-sistema/
 
 Este projeto está sob a licença [© 2025 Oceano Azul | IJA drones. Todos os direitos reservados.].
 **Desenvolvido para otimização de processos das UVIS.**
-
-
