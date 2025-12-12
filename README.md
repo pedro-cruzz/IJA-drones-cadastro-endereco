@@ -6,7 +6,17 @@ O **SGSV** é uma solução Web desenvolvida para centralizar, padronizar e gere
 
 **Problema Resolvido:** Substituição do fluxo descentralizado (envio de planilhas via e-mail/WhatsApp), eliminando redundância, insegurança de dados e falta de rastreabilidade.
 
-**Objetivo:** Fornecer um painel único onde as unidades solicitam voos e a gestão técnica analisa, insere protocolos (DECEA) e aprova as operações, garantindo que cada unidade visualize apenas os seus próprios dados (**Isolamento de Dados**).
+🎯 Objetivo
+
+Criar um painel unificado onde:
+
+As UVIS possam emitir solicitações de voo
+
+O setor técnico faça análise, gere coordenadas e protocolos DECEA
+
+Haja isolamento de dados (RLS) entre unidades
+
+Haja rastreamento completo do ciclo da solicitação
 
 ## ⚙️ Funcionalidades e Requisitos
 
@@ -23,6 +33,16 @@ O **SGSV** é uma solução Web desenvolvida para centralizar, padronizar e gere
 - **[RF06] Exportação SARPAS:** Geração automática de arquivos (.csv / .xlsx) formatados para importação em massa em sistemas de controle de espaço aéreo.
 - **[RF07] Tratamento Técnico:** Inserção de Coordenadas Geográficas e Protocolos DECEA para aprovação do voo.
 
+## 🔄 Fluxo de Status
+
+| Status         | Quando ocorre         | Responsável      |
+| -------------- | --------------------- | ---------------- |
+| **PENDENTE**   | Solicitação criada    | UVIS             |
+| **EM ANÁLISE** | Enviado ao DECEA      | Operador / Admin |
+| **APROVADO**   | Autorização concedida | Operador / Admin |
+| **NEGADO**     | Autorização recusada  | Operador / Admin |
+
+
 ## 🏗️ Arquitetura e Modelagem
 
 ### Modelo de Entidade e Relacionamento (MER)
@@ -30,43 +50,42 @@ Uma estrutura de dados foi projetada para garantir a integridade referencial ent
 
 ```mermaid
 erDiagram
-    USUARIO ||--o{ SOLICITACAO : "registro"
-    
-    USUARIO {
-        int id PK
-        string nome_uvis
-        string regiao
-        string login
-        string senha_hash
-        string nivel_acesso
-    }
+    USUARIO ||--o{ SOLICITACAO : "registro"
+    
+    USUARIO {
+        int id PK
+        string nome_uvis
+        string regiao
+        string login
+        string senha_hash
+        string nivel_acesso
+    }
 
-    SOLICITACAO {
-        int id PK
-        int usuario_id FK
-        datetime data_criacao
-        date data_voo_prevista
-        time hora_voo_prevista
-        string logradouro
-        string bairro
-        string cidade
-        string uf
-        string numero
-        string complemento
-        string cep
-        string latitude
-        string longitude
-        string tipo_visita
-        string altura_voo
-        boolean criadouro
-        boolean apoio_cet
-        string observacao
-        string foco_acao
-        string status_voo
-        string protocolo_decea
-        string motivo_recusa
-    }
-
+    SOLICITACAO {
+        int id PK
+        int usuario_id FK
+        datetime data_criacao
+        date data_voo_prevista
+        time hora_voo_prevista
+        string logradouro
+        string bairro
+        string cidade
+        string uf
+        string numero
+        string complemento
+        string cep
+        string latitude
+        string longitude
+        string tipo_visita
+        string altura_voo
+        boolean criadouro
+        boolean apoio_cet
+        string observacao
+        string foco_acao
+        string status_voo
+        string protocolo_decea
+        string motivo_recusa
+    }
 ```
 
 ## ⚙️ Fluxo de Uso
@@ -75,19 +94,32 @@ Diagrama de fluxo do sistema:
 
 ```mermaid
 graph TD
-    Usuario((UVIS)) -->|Loga| Sistema
-    Sistema -->|Identifica Unidade| Painel
-    Usuario -->|Preenchimento| Formulario[Nova Solicitação]
-    Formulario -->|Salva| BancoDeDados[(Banco de Dados)]
-    
-    Admin((Gestor)) -->|Acessa| PainelAdmin
-    PainelAdmin -->|Lê| BancoDeDados
-    Admin -->|Analisa & Gera Protocolo| DECEA
-    Admin -->|Atualiza Status| BancoDeDados
-    
-    BancoDeDados -->|Notifica| Usuario
+
+    %% --- SUBGRAFO 1: SOLICITAÇÃO ---
+    subgraph Fluxo_de_Solicitacao
+        UVIS((UVIS)) --> BD_PENDENTE["BD_PENDENTE (Status: PENDENTE)"]
+    end
+
+    %% --- SUBGRAFO 2: GESTÃO E VISUALIZAÇÃO ---
+    subgraph Fluxo_de_Gestao_Visualizacao
+        BD_PENDENTE --> Analise["Tratamento Técnico / Operador"]
+        
+        Analise --> BD_ANALISE["BD_ANALISE (Status: EM ANÁLISE)"]
+        
+        BD_ANALISE --> Decisao{"Decisão DECEA"}
+        
+        Decisao -- "Aprovado" --> BD_APROVADO["BD_APROVADO (Status: APROVADO)"]
+        Decisao -- "Negado" --> BD_NEGADO["BD_NEGADO (Status: NEGADO)"]
+
+        Admin["Admin"] --> Relatorio["Relatório de Controle"]
+        COVISA((COVISA)) --> Visualizacao["Painel Global de Leitura"]
+
+        BD_APROVADO --> UVIS
+        BD_NEGADO --> UVIS
+    end
 
 ```
+
 ## 🚀 Tecnologias Utilizadas
 
 - **Linguagem:** Python 3.12+
@@ -176,5 +208,6 @@ sgsv-sistema/
 
 ## 📄 Licença
 
-Este projeto está sob a licença [© 2025 Oceano Azul | IJA drones. Todos os direitos reservados.].
+© 2025 Oceano Azul | IJA Drones.
+Todos os direitos reservados.
 **Desenvolvido para otimização de processos das UVIS.**
