@@ -87,34 +87,44 @@
 </h4>
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-4 mb-4">
+    
+    {# CARD 1: TOTAL (Acento Primary) #}
     <div class="col">
-        <div class="card info shadow-sm rounded-4 p-3 text-center bg-primary text-white h-100">
-            <h4 class="fw-bold">Total</h4>
-            <p class="display-6 fw-bold mb-0">{{ total_solicitacoes }}</p>
+        <div class="card info status-primary shadow-sm rounded-4 p-3 h-100">
+            <h4 class="fw-bold text-primary">Total</h4>
+            <p class="display-6 fw-bold mb-0 text-dark">{{ total_solicitacoes }}</p>
         </div>
     </div>
+    
+    {# CARD 2: APROVADAS (Acento Success) #}
     <div class="col">
-        <div class="card info rounded-4 p-3 text-center bg-success text-white h-100">
-            <h4 class="fw-bold">Aprovadas</h4>
-            <p class="display-6 fw-bold mb-0">{{ total_aprovadas }}</p>
+        <div class="card info status-success shadow-sm rounded-4 p-3 h-100">
+            <h4 class="fw-bold text-success">Aprovadas</h4>
+            <p class="display-6 fw-bold mb-0 text-dark">{{ total_aprovadas }}</p>
         </div>
     </div>
+    
+    {# CARD 3: RECUSADAS (Acento Danger) #}
     <div class="col">
-        <div class="card info shadow-sm rounded-4 p-3 text-center bg-danger text-white h-100">
-            <h4 class="fw-bold">Recusadas</h4>
-            <p class="display-6 fw-bold mb-0">{{ total_recusadas }}</p>
+        <div class="card info status-danger shadow-sm rounded-4 p-3 h-100">
+            <h4 class="fw-bold text-danger">Recusadas</h4>
+            <p class="display-6 fw-bold mb-0 text-dark">{{ total_recusadas }}</p>
         </div>
     </div>
+    
+    {# CARD 4: EM ANÁLISE (Acento Warning) #}
     <div class="col">
-        <div class="card info shadow-sm rounded-4 p-3 text-center bg-warning text-white h-100">
-            <h4 class="fw-bold">Em Análise</h4>
-            <p class="display-6 fw-bold mb-0">{{ total_analise }}</p>
+        <div class="card info status-warning shadow-sm rounded-4 p-3 h-100">
+            <h4 class="fw-bold text-warning">Em Análise</h4>
+            <p class="display-6 fw-bold mb-0 text-dark">{{ total_analise }}</p>
         </div>
     </div>
+    
+    {# CARD 5: PENDENTES (Acento Info - usando o Azul primário/acento) #}
     <div class="col">
-        <div class="card info shadow-sm rounded-4 p-3 text-center bg-info text-white h-100">
-            <h4 class="fw-bold">Pendentes</h4>
-            <p class="display-6 fw-bold mb-0">{{ total_pendentes }}</p>
+        <div class="card info status-info shadow-sm rounded-4 p-3 h-100">
+            <h4 class="fw-bold text-info">Pendentes</h4>
+            <p class="display-6 fw-bold mb-0 text-dark">{{ total_pendentes }}</p>
         </div>
     </div>
 </div>

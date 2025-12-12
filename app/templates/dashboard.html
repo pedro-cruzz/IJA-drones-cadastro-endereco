@@ -64,7 +64,7 @@
 
                         <td>
                             <div class="d-flex flex-column">
-                                <span class="fw-bold text-dark">
+                                <span class="fw-bold text-main">
                                     {{ p.logradouro }}, {{ p.numero or 'S/N' }}
                                     {% if p.complemento %} <span class="fw-normal text-muted">({{ p.complemento }})</span> {% endif %}
                                 </span>
@@ -73,7 +73,7 @@
                                 </small>
 
                                 <div class="mt-1">
-                                    <span class="badge bg-light text-dark border">{{ p.foco }}</span>
+                                    <span class="badge bg-light text-main border">{{ p.foco }}</span>
                                     {% if p.latitude %}
                                         <i class="bi bi-geo-alt-fill text-danger ms-1" title="Localização GPS salva"></i>
                                     {% endif %}
@@ -144,14 +144,14 @@
 <div class="modal fade" id="modalDetalhes{{ p.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-light">
+            <div class="modal-header">
                 <h5 class="modal-title">Detalhes do Pedido #{{ p.id }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 
                 <h6 class="text-primary border-bottom pb-2 fw-bold"><i class="bi bi-geo-alt-fill"></i> Localização</h6>
-                <p class="mb-1 small">
+                <p class="rua mb-1 small">
                     <strong>Endereço:</strong> {{ p.logradouro }}, {{ p.numero }} {{ '('+p.complemento+')' if p.complemento else '' }}
                 </p>
                 <p class="mb-2 small"><strong>Bairro:</strong> {{ p.bairro }} - {{ p.cidade }}/{{ p.uf }}</p>
