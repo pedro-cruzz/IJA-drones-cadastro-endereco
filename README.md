@@ -2,7 +2,7 @@
 **Status Python Estrutura**
 
 ## 📖 Sobre o Projeto
-O **SGSV** é uma solução Web desenvolvida para centralizar, padronizar e gerenciar as rotas de voo de drones das 27 Unidades de Vigilância em Saúde (UVIS).
+O **SGSV** é uma solução Web desenvolvida para centralizar, padronizar e gerenciar as solicitações de voo de drones das 27 Unidades de Vigilância em Saúde (UVIS).
 
 **Problema Resolvido:** Substituição do fluxo descentralizado (envio de planilhas via e-mail/WhatsApp), eliminando redundância, insegurança de dados e falta de rastreabilidade.
 
