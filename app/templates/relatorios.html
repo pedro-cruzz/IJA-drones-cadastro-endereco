@@ -33,10 +33,10 @@
 </div>
 
 {# --- Bloco de Filtros Unificado --- #}
-<form method="GET" class="card shadow-sm rounded-4 p-3 mb-4 bg-light">
-    <div class="row g-2 align-items-end">
+<form method="GET" class="card p-3 mb-4 shadow-sm">
+    <div class="row g-2">
         <div class="col-md-3">
-            <label for="mes_select" class="small text-muted fw-bold mb-1">Mês:</label>
+            <label for="mes_select" class="small text-muted">Mês:</label>
             <select name="mes" id="mes_select" class="form-select form-select-sm">
                 {% for num, nome in meses.items() %}
                     <option value="{{ num }}" {% if num == mes_selecionado|int %}selected{% endif %}>{{ nome }}</option>
@@ -44,8 +44,8 @@
             </select>
         </div>
 
-        <div class="col-md-2">
-            <label for="ano_select" class="small text-muted fw-bold mb-1">Ano:</label>
+        <div class="col-md-3">
+            <label for="ano_select" class="small text-muted">Ano:</label>
             <select name="ano" id="ano_select" class="form-select form-select-sm">
                 {% for ano in anos_disponiveis %}
                     <option value="{{ ano }}" {% if ano|int == ano_selecionado|int %}selected{% endif %}>{{ ano }}</option>
@@ -54,7 +54,7 @@
         </div>
 
         <div class="col-md-3">
-            <label for="uvis_select" class="small text-muted fw-bold mb-1">Unidade (UVIS):</label>
+            <label for="uvis_select" class="small text-muted">Unidade (UVIS):</label>
             <select name="uvis_id" id="uvis_select" class="form-select form-select-sm">
                 <option value="" {% if uvis_id_selecionado is none or uvis_id_selecionado == "" %}selected{% endif %}>Todas as Unidades</option>
                 {% for id, nome in uvis_disponiveis %}
@@ -63,11 +63,10 @@
             </select>
         </div>
 
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary btn-sm w-100">
-                <i class="bi bi-funnel me-2"></i> Filtrar
-            </button>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-dark btn-sm w-100"><i class="bi bi-funnel"></i> Filtrar</button>
         </div>
+
 
         {% if uvis_id_selecionado %}
         <div class="col-md-2">
@@ -89,31 +88,31 @@
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-4 mb-4">
     <div class="col">
-        <div class="card shadow-sm rounded-4 p-3 text-center bg-primary text-white h-100">
+        <div class="card info shadow-sm rounded-4 p-3 text-center bg-primary text-white h-100">
             <h4 class="fw-bold">Total</h4>
             <p class="display-6 fw-bold mb-0">{{ total_solicitacoes }}</p>
         </div>
     </div>
     <div class="col">
-        <div class="card shadow-sm rounded-4 p-3 text-center bg-success text-white h-100">
+        <div class="card info rounded-4 p-3 text-center bg-success text-white h-100">
             <h4 class="fw-bold">Aprovadas</h4>
             <p class="display-6 fw-bold mb-0">{{ total_aprovadas }}</p>
         </div>
     </div>
     <div class="col">
-        <div class="card shadow-sm rounded-4 p-3 text-center bg-danger text-white h-100">
+        <div class="card info shadow-sm rounded-4 p-3 text-center bg-danger text-white h-100">
             <h4 class="fw-bold">Recusadas</h4>
             <p class="display-6 fw-bold mb-0">{{ total_recusadas }}</p>
         </div>
     </div>
     <div class="col">
-        <div class="card shadow-sm rounded-4 p-3 text-center bg-warning text-dark h-100">
+        <div class="card info shadow-sm rounded-4 p-3 text-center bg-warning text-white h-100">
             <h4 class="fw-bold">Em Análise</h4>
             <p class="display-6 fw-bold mb-0">{{ total_analise }}</p>
         </div>
     </div>
     <div class="col">
-        <div class="card shadow-sm rounded-4 p-3 text-center bg-info text-white h-100">
+        <div class="card info shadow-sm rounded-4 p-3 text-center bg-info text-white h-100">
             <h4 class="fw-bold">Pendentes</h4>
             <p class="display-6 fw-bold mb-0">{{ total_pendentes }}</p>
         </div>

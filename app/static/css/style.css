@@ -1,58 +1,58 @@
 /* =========================================
- DESIGN SYSTEM - OCEANO AZUL
- ========================================= */
+   DESIGN SYSTEM - OCEANO AZUL
+   ========================================= */
 :root {
-    /* --- PALETA DE CORES (Baseada na Logo) --- */
-    --color-primary-dark: #1a4a7c; /* Azul Profundo (Navbar, Títulos) */
-    --color-primary: #2c5282; /* Azul Médio (Links, Botões Padrão) */
+  /* --- PALETA DE CORES (Baseada na Logo) --- */
+  --color-primary-dark: #1a4a7c;
+  --color-primary: #2c5282;
 
-    /* Acento (Ciano/Teal da Logo) - Usado para Destaques */
-    --color-accent: #00a3c4;
-    --color-accent-hover: #008ba3;
+  /* Acento (Ciano/Teal da Logo) */
+  --color-accent: #00a3c4;
+  --color-accent-hover: #008ba3;
 
-    /* Neutros */
-    --color-bg-body: #f4f7f9; /* Fundo da Página (Cinza Azulado) */
-    --color-bg-white: #ffffff; /* Fundo de Cards e Navbar */
-    --color-text-main: #2d3748; /* Texto Principal */
-    --color-text-muted: #718096; /* Texto Secundário */
-    --color-filter: #424649; /* Cor dos filtros */
+  /* Neutros */
+  --color-bg-body: #f4f7f9;
+  --color-bg-white: #ffffff;
+  --color-text-main: #2d3748;
+  --color-text-muted: #718096;
+  --color-filter: #424649;
 
-    /* Status */
-    --color-success: #2f855a; /* Verde Sóbrio */
-    --color-warning: #c05621; /* Laranja Queimado */
-    --color-danger: #e53e3e; /* Vermelho */
+  /* Status */
+  --color-success: #2f855a;
+  --color-warning: #c05621;
+  --color-danger: #e53e3e;
 
-    /* --- EFEITOS VISUAIS --- */
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  /* --- EFEITOS VISUAIS --- */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-pill: 50rem;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 50rem;
 
-    /* --- LAYOUT DIMENSIONAL --- */
-    --navbar-height: 90px;
-    --sidebar-width: 230px;
-    --sidebar-width-collapsed: 80px;
+  /* --- LAYOUT DIMENSIONAL --- */
+  --navbar-height: 90px;
+  --sidebar-width: 230px;
+  --sidebar-width-collapsed: 80px;
 }
 
 /* =========================================
- RESET E TIPOGRAFIA
- ========================================= */
+   RESET E TIPOGRAFIA
+   ========================================= */
 body {
   background-color: var(--color-bg-body);
   font-family: "Poppins", sans-serif;
   color: var(--color-text-main);
   line-height: 1.6;
-  scroll-behavior: smooth; 
+  scroll-behavior: smooth;
   overflow-x: hidden;
 }
 
 /* Estilo para rótulos de filtro específicos */
 .rotulo-customizado {
-    font-family: Georgia, serif !important;
+  font-family: Georgia, serif !important;
 }
 
 /* Fontes adicionais */
@@ -61,7 +61,12 @@ body {
   font-size: 1.25rem;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--color-primary-dark);
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -83,13 +88,13 @@ a:hover {
 }
 
 /* =========================================
- NAVBAR (FIXA NO TOPO)
- ========================================= */
+   NAVBAR (FIXA NO TOPO)
+   ========================================= */
 .navbar {
-  position: fixed; 
+  position: fixed;
   top: 0;
   width: 100%;
-  z-index: 1030; 
+  z-index: 1030;
   background-color: rgba(255, 255, 255, 0.98);
   transition: all 0.3s ease;
   padding: 0.5rem 0;
@@ -155,16 +160,16 @@ a:hover {
 }
 
 /* =========================================
- SIDEBAR E LAYOUT PRINCIPAL
- ========================================= */
+   SIDEBAR E LAYOUT PRINCIPAL
+   ========================================= */
 .app-sidebar {
   width: var(--sidebar-width);
   position: fixed;
-  top: var(--navbar-height); 
+  top: var(--navbar-height);
   left: 0;
   height: calc(100vh - var(--navbar-height));
   background: var(--color-bg-white);
-  border-right: 1px solid rgba(0,0,0,0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
   overflow-y: auto;
   padding: 1.2rem;
   z-index: 1020;
@@ -182,7 +187,7 @@ a:hover {
 .app-sidebar .nav-link {
   color: var(--color-text-main);
   padding: 0.65rem 1rem;
-  border-radius: .45rem;
+  border-radius: 0.45rem;
   font-weight: 500;
   transition: 0.2s;
   display: flex;
@@ -190,7 +195,7 @@ a:hover {
 }
 
 .app-sidebar .nav-link:hover {
-  background: rgba(0, 163, 196, 0.10); 
+  background: rgba(0, 163, 196, 0.10);
   color: var(--color-accent);
 }
 
@@ -202,54 +207,54 @@ a:hover {
 
 /* ESTADO COLAPSADO */
 body.sidebar-collapsed .app-sidebar {
-    width: var(--sidebar-width-collapsed);
-    padding-left: 0.5rem; 
-    padding-right: 0.5rem;
-    overflow-x: hidden;
+  width: var(--sidebar-width-collapsed);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  overflow-x: hidden;
 }
 
 body.sidebar-collapsed .app-sidebar .nav-link {
-    text-align: center;
-    padding: 0.65rem 0;
+  text-align: center;
+  padding: 0.65rem 0;
 }
 
 body.sidebar-collapsed .app-sidebar .nav-link span {
-    display: none; 
+  display: none;
 }
 
 body.sidebar-collapsed .app-sidebar .nav-link .me-2 {
-    margin-right: 0; 
-    font-size: 1.2rem; 
+  margin-right: 0;
+  font-size: 1.2rem;
 }
 
 body.sidebar-collapsed .app-content {
-    margin-left: var(--sidebar-width-collapsed);
+  margin-left: var(--sidebar-width-collapsed);
 }
 
 /* =========================================
- RESPONSIVO
- ========================================= */
+   RESPONSIVO
+   ========================================= */
 @media (max-width: 992px) {
-    .navbar {
-        position: relative; 
-        min-height: auto;
-        z-index: auto;
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .app-sidebar {
-        display: none;
-    }
+  .navbar {
+    position: relative;
+    min-height: auto;
+    z-index: auto;
+    box-shadow: var(--shadow-sm);
+  }
 
-    .app-content {
-        margin-left: 0;
-        margin-top: 20px;
-    }
+  .app-sidebar {
+    display: none;
+  }
+
+  .app-content {
+    margin-left: 0;
+    margin-top: 20px;
+  }
 }
 
 /* =========================================
- BOTÕES
- ========================================= */
+   BOTÕES
+   ========================================= */
 .btn {
   border-radius: var(--radius-pill);
   font-weight: 600;
@@ -266,13 +271,13 @@ body.sidebar-collapsed .app-content {
 
 .btn .bi {
   color: currentColor;
-  margin-right: 4px; 
+  margin-right: 4px;
 }
 
 .btn-success {
   background-color: var(--color-accent);
   border-color: var(--color-accent);
-  color: #fff; 
+  color: #fff;
 }
 .btn-success:hover {
   background-color: var(--color-accent-hover);
@@ -312,8 +317,8 @@ body.sidebar-collapsed .app-content {
 }
 
 /* =========================================
- CARDS
- ========================================= */
+   CARDS
+   ========================================= */
 .card {
   border: none;
   border-radius: var(--radius-lg);
@@ -322,6 +327,7 @@ body.sidebar-collapsed .app-content {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
 }
+
 
 .card:hover {
   transform: translateY(-3px);
@@ -341,8 +347,8 @@ body.sidebar-collapsed .app-content {
 }
 
 /* =========================================
- TABELAS
- ========================================= */
+   TABELAS
+   ========================================= */
 .table-responsive {
   border-radius: var(--radius-lg);
   background: var(--color-bg-white);
@@ -381,12 +387,12 @@ body.sidebar-collapsed .app-content {
 
 .table td.bg-light {
   background-color: #f8fafc;
-  border-right: 3px solid var(--color-accent); 
+  border-right: 3px solid var(--color-accent);
 }
 
 /* =========================================
- FORMULÁRIOS
- ========================================= */
+   FORMULÁRIOS
+   ========================================= */
 .form-control,
 .form-select {
   border-radius: var(--radius-md);
@@ -398,7 +404,7 @@ body.sidebar-collapsed .app-content {
 .form-control:focus,
 .form-select:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(0, 163, 196, 0.15); 
+  box-shadow: 0 0 0 3px rgba(0, 163, 196, 0.15);
   outline: none;
 }
 
@@ -415,8 +421,8 @@ body.sidebar-collapsed .app-content {
 }
 
 /* =========================================
- BADGES
- ========================================= */
+   BADGES
+   ========================================= */
 .badge {
   padding: 0.5em 0.9em;
   border-radius: var(--radius-pill);
@@ -453,20 +459,27 @@ body.sidebar-collapsed .app-content {
 }
 
 /* =========================================
- MODO ESCURO APRIMORADO
- ========================================= */
+   MODO ESCURO APRIMORADO E FUNCIONAL (OCEANO AZUL)
+   ========================================= */
 body.dark-mode {
-  --color-bg-body: #0f172a;
-  --color-bg-white: #1e293b;
+  /* --- FUNDOS E NEUTROS --- */
+  --color-bg-body: #101927;
+  --color-bg-white: #1b273b;
   --color-text-main: #e0e7ff;
   --color-text-muted: #94a3b8;
+
+  /* --- CORES TEMA OCEANO AZUL (Mais Luminosas para Contraste) --- */
   --color-primary-dark: #60afff;
   --color-primary: #4ca3ff;
   --color-accent: #00e0ff;
   --color-accent-hover: #00b4cc;
+
+  /* --- STATUS (Garantidas Luminosas) --- */
   --color-success: #38a169;
   --color-warning: #d69e2e;
   --color-danger: #fc8181;
+
+  /* --- SOMBRAS --- */
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.45);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 10px 18px -3px rgba(0, 0, 0, 0.75);
@@ -474,11 +487,11 @@ body.dark-mode {
 
 /* Navbar e Sidebar */
 body.dark-mode .navbar {
-  background-color: #1e293b;
+  background-color: var(--color-bg-white);
   border-bottom: 1px solid #334155;
 }
 body.dark-mode .app-sidebar {
-  background: #1e293b;
+  background: var(--color-bg-white);
   border-right: 1px solid #334155;
 }
 body.dark-mode .app-sidebar .nav-link {
@@ -494,21 +507,18 @@ body.dark-mode .app-sidebar .nav-link.active {
   border-left: 4px solid var(--color-accent);
 }
 
-/* Cards */
+/* Cards e Headers */
 body.dark-mode .card {
   background-color: var(--color-bg-white);
   color: var(--color-text-main);
   box-shadow: var(--shadow-md);
 }
 body.dark-mode .card-header {
-  background-color: #1c293a;
+  background-color: #1f2a3e;
   color: var(--color-primary);
 }
-body.dark-mode .card-body {
-  color: var(--color-text-main);
-}
 
-/* Formulários */
+/* Formulários e Inputs */
 body.dark-mode .form-control,
 body.dark-mode .form-select {
   background-color: #1f2a44;
@@ -519,6 +529,10 @@ body.dark-mode .form-control:focus,
 body.dark-mode .form-select:focus {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(0, 224, 255, 0.25);
+}
+body.dark-mode .form-control[readonly] {
+  background-color: #1f2a44;
+  color: var(--color-text-muted);
 }
 body.dark-mode .form-control::placeholder {
   color: #94a3b8;
@@ -542,16 +556,16 @@ body.dark-mode .btn-outline-secondary:hover {
   color: var(--color-bg-body);
 }
 
-/* Tabelas aprimoradas */
+/* Tabelas (Com Faixas e Headers Aprimorados) */
 body.dark-mode .table thead th {
-  background-color: #1c3a70;
+  background-color: var(--color-primary-dark);
   color: #ffffff;
 }
 body.dark-mode .table tbody tr {
-  background-color: #1e293b;
+  background-color: var(--color-bg-white);
   color: var(--color-text-main);
-  transition: background-color 0.2s;
 }
+/* Faixas alternadas para melhor legibilidade */
 body.dark-mode .table tbody tr:nth-child(even) {
   background-color: #182636;
 }
@@ -568,7 +582,7 @@ body.dark-mode .table td.bg-light {
   color: var(--color-text-main);
 }
 
-/* Textos e badges */
+/* Textos e Utilitários */
 body.dark-mode .text-primary {
   color: var(--color-primary);
 }
